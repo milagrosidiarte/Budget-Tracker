@@ -9,11 +9,12 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutos
       gcTime: 1000 * 60 * 10, // 10 minutos (antes: cacheTime)
-      retry: 1,
+      retry: 0, // No reintentar para evitar errores de autenticación
       refetchOnWindowFocus: false,
+      throwOnError: false, // No lanzar errores, solo guardarlos en el estado
     },
     mutations: {
-      retry: 1,
+      retry: 0,
     },
   },
 });

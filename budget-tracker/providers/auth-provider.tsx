@@ -8,13 +8,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Inicializar cliente Supabase y restaurar sesión de localStorage
     const client = createClient();
     
-    // Supabase se encargará automáticamente de restaurar la sesión
-    // si está guardada en localStorage
-    client.auth.onAuthStateChange((event, session) => {
+    // Solo escuchar cambios de autenticación sin hacer queries
+    const {
+      data: { subscription },
+    } = client.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) {
         // Guardar en localStorage para persistencia
+        const tokenKey = `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split("//")[1]?.split(".")[0]}-auth-token`;
         localStorage.setItem(
-          `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split("//")[1]?.split(".")[0]}-auth-token`,
+          tokenKey,
           JSON.stringify({
             access_token: session.access_token,
             refresh_token: session.refresh_token,
@@ -24,6 +26,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
       }
     });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
   return <>{children}</>;
