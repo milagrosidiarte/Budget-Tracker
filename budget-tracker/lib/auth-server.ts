@@ -51,8 +51,13 @@ export async function getAuthenticatedUser(request?: NextRequest) {
 
 /**
  * Middleware helper para validar autenticación en API routes
+ * Retorna un objeto con autenticación y usuario, o una respuesta de error
  */
-export async function validateAuth(request: NextRequest) {
+export async function validateAuth(request: NextRequest): Promise<{
+  authenticated: boolean;
+  user: any;
+  response: NextResponse | null;
+}> {
   const { user, error } = await getAuthenticatedUser(request);
 
   if (!user || error) {
