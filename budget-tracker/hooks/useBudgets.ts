@@ -46,11 +46,22 @@ export function useBudget(id: string) {
   return useQuery<Budget>({
     queryKey: ["budgets", id],
     queryFn: async () => {
+      console.log(`[HOOK] useBudget: fetching budget ${id}`);
       const response = await fetch(`/api/budgets/${id}`, { 
         credentials: "include" 
       });
-      if (!response.ok) throw new Error("Error al obtener presupuesto");
-      return response.json();
+      
+      console.log(`[HOOK] useBudget response status: ${response.status}`);
+      
+      if (!response.ok) {
+        const error = await response.json();
+        console.error(`[HOOK] useBudget error:`, error);
+        throw new Error(`Error al obtener presupuesto: ${error.error || response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log(`[HOOK] useBudget: success`, data.id);
+      return data;
     },
     enabled: !!id,
   });

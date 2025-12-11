@@ -8,12 +8,17 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    console.log(`[API] GET /api/budgets/${id}`);
+    
     const { authenticated, user, response } = await validateAuth(request);
 
     if (!authenticated) {
+      console.log(`[API] ✗ Not authenticated for budget ${id}`);
       return response;
     }
 
+    console.log(`[API] ✓ Authenticated user ${user.id}, fetching budget ${id}`);
+    
     const { data: budget, error: budgetError } = await supabaseServer
       .from("budgets")
       .select("*")
@@ -22,12 +27,14 @@ export async function GET(
       .single();
 
     if (budgetError) {
+      console.log(`[API] ✗ Budget not found: ${id}`, budgetError);
       return NextResponse.json(
         { error: "Budget not found" },
         { status: 404 }
       );
     }
 
+    console.log(`[API] ✓ Budget found: ${id}`);
     return NextResponse.json(budget);
   } catch (error) {
     console.error("GET /api/budgets/[id] error:", error);

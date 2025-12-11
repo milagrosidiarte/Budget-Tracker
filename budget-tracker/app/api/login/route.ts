@@ -66,22 +66,26 @@ export async function POST(req: Request) {
       },
     });
 
+    const secure = process.env.NODE_ENV === "production";
+    console.log(`[LOGIN] Setting cookies (secure: ${secure}) for user: ${user.email}`);
+
     res.cookies.set("sb-access-token", session.access_token, {
       httpOnly: true,
       path: "/",
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: secure,
+      sameSite: "strict",
       maxAge: 60 * 60 * 24 * 30, // 30 días
     });
 
     res.cookies.set("sb-refresh-token", session.refresh_token, {
       httpOnly: true,
       path: "/",
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: secure,
+      sameSite: "strict",
       maxAge: 60 * 60 * 24 * 30, // 30 días
     });
 
+    console.log("[LOGIN] ✓ Cookies set successfully");
     return res;
   } catch (error) {
     console.error("Login error:", error);
