@@ -51,13 +51,12 @@ export async function getAuthenticatedUser(request?: NextRequest) {
 
 /**
  * Middleware helper para validar autenticación en API routes
- * Retorna un objeto con autenticación y usuario, o una respuesta de error
+ * Retorna un objeto discriminado que TypeScript puede entender correctamente
  */
-export async function validateAuth(request: NextRequest): Promise<{
-  authenticated: boolean;
-  user: any;
-  response: NextResponse | null;
-}> {
+export async function validateAuth(request: NextRequest): Promise<
+  | { authenticated: true; user: any; response: null }
+  | { authenticated: false; user: null; response: NextResponse }
+> {
   const { user, error } = await getAuthenticatedUser(request);
 
   if (!user || error) {
