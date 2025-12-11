@@ -67,13 +67,14 @@ export async function POST(req: Request) {
     });
 
     const secure = process.env.NODE_ENV === "production";
-    console.log(`[LOGIN] Setting cookies (secure: ${secure}) for user: ${user.email}`);
+    const sameSite = secure ? "strict" : "none";
+    console.log(`[LOGIN] Setting cookies (secure: ${secure}, sameSite: ${sameSite}) for user: ${user.email}`);
 
     res.cookies.set("sb-access-token", session.access_token, {
       httpOnly: true,
       path: "/",
       secure: secure,
-      sameSite: "strict",
+      sameSite: sameSite as any,
       maxAge: 60 * 60 * 24 * 30, // 30 días
     });
 
@@ -81,7 +82,7 @@ export async function POST(req: Request) {
       httpOnly: true,
       path: "/",
       secure: secure,
-      sameSite: "strict",
+      sameSite: sameSite as any,
       maxAge: 60 * 60 * 24 * 30, // 30 días
     });
 
