@@ -1,4 +1,3 @@
 {
-  "buildCommand": "cd budget-tracker && npm run build",
-  "outputDirectory": "budget-tracker/.next"
+  "root": "budget-tracker"
 }
