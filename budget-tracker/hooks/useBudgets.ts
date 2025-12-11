@@ -61,21 +61,32 @@ export function useCreateBudget() {
 
   return useMutation({
     mutationFn: async (data: CreateBudgetInput) => {
-      const headers = await getAuthHeaders();
-      const response = await fetch("/api/budgets", {
-        method: "POST",
-        headers,
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Error al crear presupuesto");
-      return response.json();
+      try {
+        const headers = await getAuthHeaders();
+        const response = await fetch("/api/budgets", {
+          method: "POST",
+          headers,
+          body: JSON.stringify(data),
+        });
+        const responseData = await response.json();
+        
+        if (!response.ok) {
+          console.error("Error response:", responseData);
+          throw new Error(responseData.error || "Error al crear presupuesto");
+        }
+        return responseData;
+      } catch (error) {
+        console.error("Mutation error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
       toast.success("Presupuesto creado correctamente");
     },
-    onError: () => {
-      toast.error("Error al crear presupuesto");
+    onError: (error: Error) => {
+      console.error("Error creating budget:", error);
+      toast.error(error.message || "Error al crear presupuesto");
     },
   });
 }

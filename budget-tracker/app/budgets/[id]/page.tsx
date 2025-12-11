@@ -1,24 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use } from "react";
 import { useBudget, useDeleteBudget } from "@/hooks/useBudgets";
 import { useTransactions, useCreateTransaction } from "@/hooks/useTransactions";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function BudgetDetailsPage({ params }: PageProps) {
   const router = useRouter();
-  const { data: budget, isLoading } = useBudget(params.id);
-  const { data: transactions = [] } = useTransactions(params.id);
-  const { mutate: deleteBudget } = useDeleteBudget(params.id);
+  const resolvedParams = use(params);
+  const { data: budget, isLoading } = useBudget(resolvedParams.id);
+  const { data: transactions = [] } = useTransactions(resolvedParams.id);
+  const { mutate: deleteBudget } = useDeleteBudget(resolvedParams.id);
   const { mutate: createTransaction, isPending: isCreatingTransaction } =
-    useCreateTransaction(params.id);
+    useCreateTransaction(resolvedParams.id);
 
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [transactionForm, setTransactionForm] = useState({

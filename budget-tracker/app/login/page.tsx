@@ -41,6 +41,14 @@ export default function LoginPage() {
         return;
       }
 
+      // Guardar la sesión en localStorage para que persista
+      if (data.session) {
+        localStorage.setItem(
+          `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split("//")[1]?.split(".")[0]}-auth-token`,
+          JSON.stringify(data.session)
+        );
+      }
+
       toast.success("¡Iniciaste sesión correctamente!");
       setTimeout(() => router.push("/dashboard"), 1000);
     } catch (err) {

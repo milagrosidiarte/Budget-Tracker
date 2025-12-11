@@ -66,14 +66,24 @@ export function useCreateTransaction(budgetId: string) {
 
   return useMutation({
     mutationFn: async (data: CreateTransactionInput) => {
-      const headers = await getAuthHeaders();
-      const response = await fetch(`/api/budgets/${budgetId}/transactions`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Error al crear transacción");
-      return response.json();
+      try {
+        const headers = await getAuthHeaders();
+        const response = await fetch(`/api/budgets/${budgetId}/transactions`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(data),
+        });
+        const responseData = await response.json();
+        
+        if (!response.ok) {
+          console.error("Error response:", responseData);
+          throw new Error(responseData.error || "Error al crear transacción");
+        }
+        return responseData;
+      } catch (error) {
+        console.error("Mutation error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -82,8 +92,9 @@ export function useCreateTransaction(budgetId: string) {
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
       toast.success("Transacción creada correctamente");
     },
-    onError: () => {
-      toast.error("Error al crear transacción");
+    onError: (error: Error) => {
+      console.error("Error creating transaction:", error);
+      toast.error(error.message || "Error al crear transacción");
     },
   });
 }

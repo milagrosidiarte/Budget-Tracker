@@ -1,12 +1,10 @@
 import { supabaseServer } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     // Get current user from Authorization header
-    const authHeader = await import("next/headers").then((m) =>
-      m.headers().then((h) => h.get("authorization"))
-    );
+    const authHeader = request.headers.get("authorization");
 
     if (!authHeader) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -30,13 +28,15 @@ export async function GET() {
       .order("created_at", { ascending: false });
 
     if (budgetError) {
+      console.error("Budget error:", budgetError);
       return NextResponse.json({ error: budgetError.message }, { status: 500 });
     }
 
     return NextResponse.json(budgets);
-  } catch {
+  } catch (error) {
+    console.error("GET /api/budgets error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabaseServer.auth.getUser(token);
 
     if (error || !data.user) {
+      console.error("Auth error:", error);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -87,13 +88,15 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (budgetError) {
+      console.error("Budget insert error:", budgetError);
       return NextResponse.json({ error: budgetError.message }, { status: 500 });
     }
 
     return NextResponse.json(budget, { status: 201 });
-  } catch {
+  } catch (error) {
+    console.error("POST /api/budgets error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

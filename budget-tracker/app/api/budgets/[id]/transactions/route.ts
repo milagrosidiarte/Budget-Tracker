@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authHeader = request.headers.get("authorization");
 
     if (!authHeader) {
@@ -23,7 +24,7 @@ export async function GET(
     const { data: budget, error: budgetError } = await supabaseServer
       .from("budgets")
       .select("id")
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", data.user.id)
       .single();
 
@@ -38,17 +39,20 @@ export async function GET(
     const { data: transactions, error: transError } = await supabaseServer
       .from("transactions")
       .select("*")
-      .eq("budget_id", params.id)
+      .eq("budget_id", id)
       .order("date", { ascending: false });
 
     if (transError) {
+      console.error("Supabase transactions select error:", transError);
       return NextResponse.json({ error: transError.message }, { status: 500 });
     }
 
     return NextResponse.json(transactions);
-  } catch {
+  } catch (error) {
+    console.error("GET /api/budgets/[id]/transactions error:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error", details: errorMessage },
       { status: 500 }
     );
   }
@@ -56,9 +60,10 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authHeader = request.headers.get("authorization");
 
     if (!authHeader) {
@@ -76,7 +81,7 @@ export async function POST(
     const { data: budget, error: budgetError } = await supabaseServer
       .from("budgets")
       .select("id")
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", data.user.id)
       .single();
 
@@ -99,7 +104,7 @@ export async function POST(
     const { data: transaction, error: transError } = await supabaseServer
       .from("transactions")
       .insert({
-        budget_id: params.id,
+        budget_id: id,
         user_id: data.user.id,
         description: body.description,
         amount: body.amount,
@@ -112,13 +117,16 @@ export async function POST(
       .single();
 
     if (transError) {
+      console.error("Supabase transaction insert error:", transError);
       return NextResponse.json({ error: transError.message }, { status: 500 });
     }
 
     return NextResponse.json(transaction, { status: 201 });
-  } catch {
+  } catch (error) {
+    console.error("POST /api/budgets/[id]/transactions error:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error", details: errorMessage },
       { status: 500 }
     );
   }

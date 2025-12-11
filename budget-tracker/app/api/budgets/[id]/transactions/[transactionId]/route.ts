@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; transactionId: string } }
+  { params }: { params: Promise<{ id: string; transactionId: string }> }
 ) {
   try {
+    const { id, transactionId } = await params;
     const authHeader = request.headers.get("authorization");
 
     if (!authHeader) {
@@ -23,7 +24,7 @@ export async function GET(
     const { data: budget, error: budgetError } = await supabaseServer
       .from("budgets")
       .select("id")
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", data.user.id)
       .single();
 
@@ -37,8 +38,8 @@ export async function GET(
     const { data: transaction, error: transError } = await supabaseServer
       .from("transactions")
       .select("*")
-      .eq("id", params.transactionId)
-      .eq("budget_id", params.id)
+      .eq("id", transactionId)
+      .eq("budget_id", id)
       .single();
 
     if (transError || !transaction) {
@@ -49,7 +50,8 @@ export async function GET(
     }
 
     return NextResponse.json(transaction);
-  } catch {
+  } catch (error) {
+    console.error("GET /api/budgets/[id]/transactions/[transactionId] error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -59,9 +61,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string; transactionId: string } }
+  { params }: { params: Promise<{ id: string; transactionId: string }> }
 ) {
   try {
+    const { id, transactionId } = await params;
     const authHeader = request.headers.get("authorization");
 
     if (!authHeader) {
@@ -79,7 +82,7 @@ export async function PATCH(
     const { data: budget, error: budgetError } = await supabaseServer
       .from("budgets")
       .select("id")
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", data.user.id)
       .single();
 
@@ -94,8 +97,8 @@ export async function PATCH(
     const { data: transaction, error: transCheckError } = await supabaseServer
       .from("transactions")
       .select("id")
-      .eq("id", params.transactionId)
-      .eq("budget_id", params.id)
+      .eq("id", transactionId)
+      .eq("budget_id", id)
       .single();
 
     if (transCheckError || !transaction) {
@@ -117,7 +120,7 @@ export async function PATCH(
         ...(body.date && { date: body.date }),
         ...(body.notes !== undefined && { notes: body.notes }),
       })
-      .eq("id", params.transactionId)
+      .eq("id", transactionId)
       .select()
       .single();
 
@@ -126,7 +129,8 @@ export async function PATCH(
     }
 
     return NextResponse.json(updated);
-  } catch {
+  } catch (error) {
+    console.error("PATCH /api/budgets/[id]/transactions/[transactionId] error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -136,9 +140,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; transactionId: string } }
+  { params }: { params: Promise<{ id: string; transactionId: string }> }
 ) {
   try {
+    const { id, transactionId } = await params;
     const authHeader = request.headers.get("authorization");
 
     if (!authHeader) {
@@ -156,7 +161,7 @@ export async function DELETE(
     const { data: budget, error: budgetError } = await supabaseServer
       .from("budgets")
       .select("id")
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", data.user.id)
       .single();
 
@@ -171,8 +176,8 @@ export async function DELETE(
     const { data: transaction, error: transCheckError } = await supabaseServer
       .from("transactions")
       .select("id")
-      .eq("id", params.transactionId)
-      .eq("budget_id", params.id)
+      .eq("id", transactionId)
+      .eq("budget_id", id)
       .single();
 
     if (transCheckError || !transaction) {
@@ -185,14 +190,15 @@ export async function DELETE(
     const { error: deleteError } = await supabaseServer
       .from("transactions")
       .delete()
-      .eq("id", params.transactionId);
+      .eq("id", transactionId);
 
     if (deleteError) {
       return NextResponse.json({ error: deleteError.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    console.error("DELETE /api/budgets/[id]/transactions/[transactionId] error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authHeader = request.headers.get("authorization");
 
     if (!authHeader) {
@@ -22,7 +23,7 @@ export async function GET(
     const { data: budget, error: budgetError } = await supabaseServer
       .from("budgets")
       .select("*")
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", data.user.id)
       .single();
 
@@ -34,7 +35,8 @@ export async function GET(
     }
 
     return NextResponse.json(budget);
-  } catch {
+  } catch (error) {
+    console.error("GET /api/budgets/[id] error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -44,9 +46,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authHeader = request.headers.get("authorization");
 
     if (!authHeader) {
@@ -64,7 +67,7 @@ export async function PATCH(
     const { data: budget, error: checkError } = await supabaseServer
       .from("budgets")
       .select("id")
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", data.user.id)
       .single();
 
@@ -86,7 +89,7 @@ export async function PATCH(
         ...(body.description !== undefined && { description: body.description }),
         ...(body.end_date !== undefined && { end_date: body.end_date }),
       })
-      .eq("id", params.id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -95,7 +98,8 @@ export async function PATCH(
     }
 
     return NextResponse.json(updated);
-  } catch {
+  } catch (error) {
+    console.error("PATCH /api/budgets/[id] error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -105,9 +109,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authHeader = request.headers.get("authorization");
 
     if (!authHeader) {
@@ -125,7 +130,7 @@ export async function DELETE(
     const { data: budget, error: checkError } = await supabaseServer
       .from("budgets")
       .select("id")
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", data.user.id)
       .single();
 
@@ -139,14 +144,15 @@ export async function DELETE(
     const { error: deleteError } = await supabaseServer
       .from("budgets")
       .delete()
-      .eq("id", params.id);
+      .eq("id", id);
 
     if (deleteError) {
       return NextResponse.json({ error: deleteError.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    console.error("DELETE /api/budgets/[id] error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
