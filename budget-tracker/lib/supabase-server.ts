@@ -5,4 +5,4 @@ export const supabaseServer = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-//cliente para el backend
+//Este cliente se usa solo en el servidor, por ejemplo para obtener datos protegidos.
