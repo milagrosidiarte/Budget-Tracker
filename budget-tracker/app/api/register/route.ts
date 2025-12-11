@@ -34,6 +34,17 @@ export async function POST(request: Request) {
     if (authError) {
       console.error("Supabase auth error:", authError);
       
+      // Error de webhook/autenticación
+      if (authError.message?.toLowerCase().includes("hook requires authorization token")) {
+        return NextResponse.json(
+          { 
+            error: "Error de configuración en el servidor. Por favor intenta más tarde.",
+            details: "Webhook authentication issue"
+          },
+          { status: 500 }
+        );
+      }
+      
       if (authError.message?.toLowerCase().includes("rate limit")) {
         return NextResponse.json(
           { error: "Demasiados intentos. Por favor intenta más tarde." },
@@ -61,8 +72,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Verificar si existe tabla 'profiles' y actualizar perfil del usuario
+    // 2. Crear perfil del usuario (opcional - comentado si tabla no existe)
     try {
+      // Solo intentar crear perfil si es necesario
+      // Por ahora comentado para evitar errores de autorización
+      /*
       const { error: profileError } = await supabaseServer
         .from("profiles")
         .insert([
@@ -77,6 +91,7 @@ export async function POST(request: Request) {
         console.log("Error creating profile:", profileError);
         // No fallar si no existe la tabla profiles
       }
+      */
     } catch (err) {
       console.log("Profile creation optional error:", err);
     }
