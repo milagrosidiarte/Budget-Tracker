@@ -65,5 +65,5 @@ export async function middleware(req: NextRequest) {
 
 // Define en qué rutas aplica el middleware
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/budgets/:path*"],
 };
