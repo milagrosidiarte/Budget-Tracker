@@ -1,0 +1,14 @@
+{
+  "builds": [
+    {
+      "src": "budget-tracker/package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ]
+}
