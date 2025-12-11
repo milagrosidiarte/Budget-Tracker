@@ -4,10 +4,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; transactionId: string }> }
+  { params }: { params: { id: string; transactionId: string } }
 ) {
   try {
-    const { id, transactionId } = await params;
+    const { id, transactionId } = params;
     const { authenticated, user, response } = await validateAuth(request);
 
     if (!authenticated) {
@@ -55,10 +55,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; transactionId: string }> }
+  { params }: { params: { id: string; transactionId: string } }
 ) {
   try {
-    const { id, transactionId } = await params;
+    const { id, transactionId } = params;
     const { authenticated, user, response } = await validateAuth(request);
 
     if (!authenticated) {
@@ -127,10 +127,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; transactionId: string }> }
+  { params }: { params: { id: string; transactionId: string } }
 ) {
   try {
-    const { id, transactionId } = await params;
+    const { id, transactionId } = params;
     const { authenticated, user, response } = await validateAuth(request);
 
     if (!authenticated) {
