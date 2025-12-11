@@ -33,10 +33,10 @@ export default function DashboardPage() {
         credentials: "include",
       });
 
-      router.push("/login");
+      router.push("/");
     } catch (error) {
       console.error("Error during logout:", error);
-      router.push("/login");
+      router.push("/");
     }
   };
 
