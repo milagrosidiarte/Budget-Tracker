@@ -1,14 +1,5 @@
 {
-  "builds": [
-    {
-      "src": "budget-tracker/package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "budget-tracker/$1"
-    }
-  ]
+  "buildCommand": "cd budget-tracker && npm run build",
+  "installCommand": "cd budget-tracker && npm install",
+  "outputDirectory": "budget-tracker/.next"
 }
