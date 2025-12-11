@@ -41,6 +41,14 @@ export default function BudgetsPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto">
+        {/* Back Button */}
+        <Link
+          href="/dashboard"
+          className="mb-6 inline-flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors font-medium"
+        >
+          <span className="text-xl">←</span> Volver al Dashboard
+        </Link>
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
           <div>

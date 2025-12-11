@@ -101,9 +101,9 @@ export default function BudgetDetailsPage({ params }: PageProps) {
         {/* Back Button */}
         <Link
           href="/budgets"
-          className="mb-6 inline-flex items-center text-blue-600 hover:text-blue-700"
+          className="mb-6 inline-flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors font-medium"
         >
-          ← Volver a Presupuestos
+          <span className="text-xl">←</span> Volver al Dashboard
         </Link>
 
         {/* Budget Info */}
