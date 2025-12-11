@@ -30,6 +30,7 @@ export default function LoginPage() {
       const response = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Importante: incluir cookies en la request
         body: JSON.stringify({ email, password }),
       });
 
@@ -41,13 +42,8 @@ export default function LoginPage() {
         return;
       }
 
-      // Guardar la sesión en localStorage para que persista
-      if (data.session) {
-        localStorage.setItem(
-          `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split("//")[1]?.split(".")[0]}-auth-token`,
-          JSON.stringify(data.session)
-        );
-      }
+      // Las cookies http-only se configuran automáticamente en la respuesta
+      // No necesitamos hacer nada más con los tokens
 
       toast.success("¡Iniciaste sesión correctamente!");
       setTimeout(() => router.push("/dashboard"), 1000);

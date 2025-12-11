@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { getAuthHeaders } from "@/lib/auth-utils";
 
 // Tipos
 export interface Transaction {
@@ -31,9 +30,8 @@ export function useTransactions(budgetId: string) {
   return useQuery<Transaction[]>({
     queryKey: ["transactions", budgetId],
     queryFn: async () => {
-      const headers = await getAuthHeaders();
       const response = await fetch(`/api/budgets/${budgetId}/transactions`, {
-        headers,
+        credentials: "include",
       });
       if (!response.ok) throw new Error("Error al obtener transacciones");
       return response.json();
@@ -48,10 +46,9 @@ export function useTransaction(budgetId: string, id: string) {
   return useQuery<Transaction>({
     queryKey: ["transactions", budgetId, id],
     queryFn: async () => {
-      const headers = await getAuthHeaders();
       const response = await fetch(
         `/api/budgets/${budgetId}/transactions/${id}`,
-        { headers }
+        { credentials: "include" }
       );
       if (!response.ok) throw new Error("Error al obtener transacción");
       return response.json();
@@ -67,10 +64,10 @@ export function useCreateTransaction(budgetId: string) {
   return useMutation({
     mutationFn: async (data: CreateTransactionInput) => {
       try {
-        const headers = await getAuthHeaders();
         const response = await fetch(`/api/budgets/${budgetId}/transactions`, {
           method: "POST",
-          headers,
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify(data),
         });
         const responseData = await response.json();
@@ -105,12 +102,12 @@ export function useUpdateTransaction(budgetId: string, id: string) {
 
   return useMutation({
     mutationFn: async (data: Partial<CreateTransactionInput>) => {
-      const headers = await getAuthHeaders();
       const response = await fetch(
         `/api/budgets/${budgetId}/transactions/${id}`,
         {
           method: "PATCH",
-          headers,
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify(data),
         }
       );
@@ -134,12 +131,11 @@ export function useDeleteTransaction(budgetId: string, id: string) {
 
   return useMutation({
     mutationFn: async () => {
-      const headers = await getAuthHeaders();
       const response = await fetch(
         `/api/budgets/${budgetId}/transactions/${id}`,
         {
           method: "DELETE",
-          headers,
+          credentials: "include",
         }
       );
       if (!response.ok) throw new Error("Error al eliminar transacción");

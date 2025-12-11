@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { getAuthHeaders } from "@/lib/auth-utils";
 
 // Tipos
 export interface Budget {
@@ -33,8 +32,9 @@ export function useBudgets() {
   return useQuery<Budget[]>({
     queryKey: ["budgets"],
     queryFn: async () => {
-      const headers = await getAuthHeaders();
-      const response = await fetch("/api/budgets", { headers });
+      const response = await fetch("/api/budgets", { 
+        credentials: "include" 
+      });
       if (!response.ok) throw new Error("Error al obtener presupuestos");
       return response.json();
     },
@@ -46,8 +46,9 @@ export function useBudget(id: string) {
   return useQuery<Budget>({
     queryKey: ["budgets", id],
     queryFn: async () => {
-      const headers = await getAuthHeaders();
-      const response = await fetch(`/api/budgets/${id}`, { headers });
+      const response = await fetch(`/api/budgets/${id}`, { 
+        credentials: "include" 
+      });
       if (!response.ok) throw new Error("Error al obtener presupuesto");
       return response.json();
     },
@@ -62,10 +63,10 @@ export function useCreateBudget() {
   return useMutation({
     mutationFn: async (data: CreateBudgetInput) => {
       try {
-        const headers = await getAuthHeaders();
         const response = await fetch("/api/budgets", {
           method: "POST",
-          headers,
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify(data),
         });
         const responseData = await response.json();
@@ -97,10 +98,10 @@ export function useUpdateBudget(id: string) {
 
   return useMutation({
     mutationFn: async (data: Partial<CreateBudgetInput>) => {
-      const headers = await getAuthHeaders();
       const response = await fetch(`/api/budgets/${id}`, {
         method: "PATCH",
-        headers,
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error("Error al actualizar presupuesto");
@@ -123,10 +124,9 @@ export function useDeleteBudget(id: string) {
 
   return useMutation({
     mutationFn: async () => {
-      const headers = await getAuthHeaders();
       const response = await fetch(`/api/budgets/${id}`, {
         method: "DELETE",
-        headers,
+        credentials: "include",
       });
       if (!response.ok) throw new Error("Error al eliminar presupuesto");
       return response.json();

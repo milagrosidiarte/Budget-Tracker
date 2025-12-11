@@ -26,9 +26,18 @@ export default function DashboardPage() {
   }, []);
 
   const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
+    try {
+      // Llamar al endpoint de logout para limpiar las cookies http-only
+      await fetch("/api/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      router.push("/login");
+    } catch (error) {
+      console.error("Error during logout:", error);
+      router.push("/login");
+    }
   };
 
   if (isLoading) {

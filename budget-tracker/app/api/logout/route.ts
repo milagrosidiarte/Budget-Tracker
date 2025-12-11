@@ -1,13 +1,23 @@
 import { NextResponse } from "next/server";
 
-export async function GET() {
-  const res = NextResponse.redirect(new URL("/", new URL("http://localhost:3000")), {
-    status: 302,
-  });
+export async function POST() {
+  const res = NextResponse.json(
+    { success: true, message: "Sesión cerrada" },
+    { status: 200 }
+  );
 
-  // Borrar las cookies
-  res.cookies.set("sb-access-token", "", { maxAge: 0 });
-  res.cookies.set("sb-refresh-token", "", { maxAge: 0 });
+  // Limpiar cookies http-only
+  res.cookies.set("sb-access-token", "", { 
+    httpOnly: true,
+    path: "/",
+    maxAge: 0 
+  });
+  res.cookies.set("sb-refresh-token", "", { 
+    httpOnly: true,
+    path: "/",
+    maxAge: 0 
+  });
 
   return res;
 }
+

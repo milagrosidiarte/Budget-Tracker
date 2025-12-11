@@ -1,4 +1,5 @@
 import { supabaseServer } from "@/lib/supabase-server";
+import { validateAuth } from "@/lib/auth-server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -7,17 +8,10 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const authHeader = request.headers.get("authorization");
+    const { authenticated, user, response } = await validateAuth(request);
 
-    if (!authHeader) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const token = authHeader.split(" ")[1];
-    const { data, error } = await supabaseServer.auth.getUser(token);
-
-    if (error || !data.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!authenticated) {
+      return response;
     }
 
     // Verify budget belongs to user
@@ -25,7 +19,7 @@ export async function GET(
       .from("budgets")
       .select("id")
       .eq("id", id)
-      .eq("user_id", data.user.id)
+      .eq("user_id", user!.id)
       .single();
 
     if (budgetError || !budget) {
@@ -64,17 +58,10 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const authHeader = request.headers.get("authorization");
+    const { authenticated, user, response } = await validateAuth(request);
 
-    if (!authHeader) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const token = authHeader.split(" ")[1];
-    const { data, error } = await supabaseServer.auth.getUser(token);
-
-    if (error || !data.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!authenticated) {
+      return response;
     }
 
     // Verify budget belongs to user
@@ -82,7 +69,7 @@ export async function POST(
       .from("budgets")
       .select("id")
       .eq("id", id)
-      .eq("user_id", data.user.id)
+      .eq("user_id", user!.id)
       .single();
 
     if (budgetError || !budget) {
@@ -105,7 +92,7 @@ export async function POST(
       .from("transactions")
       .insert({
         budget_id: id,
-        user_id: data.user.id,
+        user_id: user!.id,
         description: body.description,
         amount: body.amount,
         type: body.type || "expense",

@@ -1,7 +1,17 @@
 import { createClient } from "./supabase-client";
+import { cookies } from "next/headers";
 
 export async function getAuthToken(): Promise<string> {
   try {
+    // Intentar obtener el token desde cookies (lado servidor)
+    const cookieStore = await cookies();
+    const token = cookieStore.get("sb-access-token")?.value;
+
+    if (token) {
+      return token;
+    }
+
+    // Fallback: obtener de la sesión del cliente
     const supabaseClient = createClient();
     const {
       data: { session },
@@ -10,11 +20,10 @@ export async function getAuthToken(): Promise<string> {
 
     if (error) {
       console.error("Error getting session:", error);
-      throw new Error(`No se pudo obtener la sesión: ${error.message}`);
+      throw new Error(`Authentication error: ${error.message}`);
     }
 
-    if (!session) {
-      console.error("No session found in storage or auth");
+    if (!session?.access_token) {
       throw new Error("No authenticated session. Please log in first.");
     }
 

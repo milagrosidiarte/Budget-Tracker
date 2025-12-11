@@ -1,30 +1,20 @@
 import { supabaseServer } from "@/lib/supabase-server";
+import { validateAuth } from "@/lib/auth-server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
-    // Get current user from Authorization header
-    const authHeader = request.headers.get("authorization");
+    const { authenticated, user, response } = await validateAuth(request);
 
-    if (!authHeader) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Extract token from "Bearer <token>"
-    const token = authHeader.split(" ")[1];
-
-    // Verify token and get user
-    const { data, error } = await supabaseServer.auth.getUser(token);
-
-    if (error || !data.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!authenticated) {
+      return response;
     }
 
     // Get user's budgets
     const { data: budgets, error: budgetError } = await supabaseServer
       .from("budgets")
       .select("*")
-      .eq("user_id", data.user.id)
+      .eq("user_id", user!.id)
       .order("created_at", { ascending: false });
 
     if (budgetError) {
@@ -44,22 +34,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Get current user from Authorization header
-    const authHeader = request.headers.get("authorization");
+    const { authenticated, user, response } = await validateAuth(request);
 
-    if (!authHeader) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Extract token from "Bearer <token>"
-    const token = authHeader.split(" ")[1];
-
-    // Verify token and get user
-    const { data, error } = await supabaseServer.auth.getUser(token);
-
-    if (error || !data.user) {
-      console.error("Auth error:", error);
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!authenticated) {
+      return response;
     }
 
     const body = await request.json();
@@ -76,7 +54,7 @@ export async function POST(request: NextRequest) {
     const { data: budget, error: budgetError } = await supabaseServer
       .from("budgets")
       .insert({
-        user_id: data.user.id,
+        user_id: user!.id,
         name: body.name,
         amount: body.amount,
         period: body.period,
