@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     });
 
     const secure = process.env.NODE_ENV === "production";
-    const sameSite = secure ? "strict" : "none";
+    const sameSite = process.env.NODE_ENV === "production" ? "strict" : "lax";
     console.log(`[LOGIN] Setting cookies (secure: ${secure}, sameSite: ${sameSite}) for user: ${user.email}`);
 
     res.cookies.set("sb-access-token", session.access_token, {

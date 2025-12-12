@@ -29,12 +29,19 @@ export async function GET(
       );
     }
 
-    // Get transactions for this budget
+    // Get transactions for this budget with category names
     const { data: transactions, error: transError } = await supabaseServer
       .from("transactions")
-      .select("*")
+      .select(`
+        *,
+        categories!category_id (
+          id,
+          name,
+          color
+        )
+      `)
       .eq("budget_id", id)
-      .order("date", { ascending: false });
+      .order("created_at", { ascending: false });
 
     if (transError) {
       console.error("Supabase transactions select error:", transError);
@@ -96,11 +103,18 @@ export async function POST(
         description: body.description,
         amount: body.amount,
         type: body.type || "expense",
-        category: body.category || "other",
+        category_id: body.category || null,
         date: body.date,
         notes: body.notes || null,
       })
-      .select()
+      .select(`
+        *,
+        categories!category_id (
+          id,
+          name,
+          color
+        )
+      `)
       .single();
 
     if (transError) {

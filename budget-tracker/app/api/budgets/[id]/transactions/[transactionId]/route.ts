@@ -31,7 +31,14 @@ export async function GET(
 
     const { data: transaction, error: transError } = await supabaseServer
       .from("transactions")
-      .select("*")
+      .select(`
+        *,
+        categories!category_id (
+          id,
+          name,
+          color
+        )
+      `)
       .eq("id", transactionId)
       .eq("budget_id", id)
       .single();
@@ -103,12 +110,19 @@ export async function PATCH(
         ...(body.description && { description: body.description }),
         ...(body.amount !== undefined && { amount: body.amount }),
         ...(body.type && { type: body.type }),
-        ...(body.category && { category: body.category }),
+        ...(body.category !== undefined && { category_id: body.category }),
         ...(body.date && { date: body.date }),
         ...(body.notes !== undefined && { notes: body.notes }),
       })
       .eq("id", transactionId)
-      .select()
+      .select(`
+        *,
+        categories!category_id (
+          id,
+          name,
+          color
+        )
+      `)
       .single();
 
     if (updateError) {

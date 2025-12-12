@@ -2,11 +2,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 // Tipos
+export interface Category {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface Transaction {
   id: string;
   budget_id: string;
   user_id: string;
-  category?: string;
+  category_id?: string;
+  categories?: Category;
   amount: number;
   type: "expense" | "income";
   description?: string;

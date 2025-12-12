@@ -2,7 +2,8 @@
 
 import { useState, use } from "react";
 import { useBudget, useDeleteBudget } from "@/hooks/useBudgets";
-import { useTransactions, useCreateTransaction } from "@/hooks/useTransactions";
+import { useTransactions, useCreateTransaction, useDeleteTransaction, useUpdateTransaction } from "@/hooks/useTransactions";
+import { useCategories } from "@/hooks/useCategories";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -17,6 +18,7 @@ export default function BudgetDetailsPage({ params }: PageProps) {
   const resolvedParams = use(params);
   const { data: budget, isLoading } = useBudget(resolvedParams.id);
   const { data: transactions = [] } = useTransactions(resolvedParams.id);
+  const { data: categories = [] } = useCategories();
   const { mutate: deleteBudget } = useDeleteBudget(resolvedParams.id);
   const { mutate: createTransaction, isPending: isCreatingTransaction } =
     useCreateTransaction(resolvedParams.id);
@@ -26,7 +28,7 @@ export default function BudgetDetailsPage({ params }: PageProps) {
     description: "",
     amount: "",
     type: "expense" as "expense" | "income",
-    category: "other",
+    category: categories.length > 0 ? categories[0].id : "",
     date: new Date().toISOString().split("T")[0],
     notes: "",
   });
@@ -69,7 +71,7 @@ export default function BudgetDetailsPage({ params }: PageProps) {
             description: "",
             amount: "",
             type: "expense",
-            category: "other",
+            category: categories.length > 0 ? categories[0].id : "",
             date: new Date().toISOString().split("T")[0],
             notes: "",
           });
@@ -274,22 +276,32 @@ export default function BudgetDetailsPage({ params }: PageProps) {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Categoría
                   </label>
-                  <select
-                    value={transactionForm.category}
-                    onChange={(e) =>
-                      setTransactionForm({
-                        ...transactionForm,
-                        category: e.target.value,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="other">Otro</option>
-                    <option value="food">Comida</option>
-                    <option value="transport">Transporte</option>
-                    <option value="entertainment">Entretenimiento</option>
-                    <option value="utilities">Servicios</option>
-                  </select>
+                  {categories.length === 0 ? (
+                    <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 flex items-center justify-between">
+                      <span>Sin categorías creadas</span>
+                      <Link href="/categories" className="text-blue-600 hover:text-blue-700 text-xs font-medium">
+                        Crear
+                      </Link>
+                    </div>
+                  ) : (
+                    <select
+                      value={transactionForm.category}
+                      onChange={(e) =>
+                        setTransactionForm({
+                          ...transactionForm,
+                          category: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Sin categoría</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </div>
 
@@ -370,34 +382,18 @@ export default function BudgetDetailsPage({ params }: PageProps) {
                     <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
                       Monto
                     </th>
+                    <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
+                      Acciones
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {transactions.map((transaction) => (
-                    <tr
+                    <TransactionRow
                       key={transaction.id}
-                      className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {new Date(transaction.date).toLocaleDateString("es-AR")}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {transaction.description}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {transaction.category}
-                      </td>
-                      <td
-                        className={`px-6 py-4 text-sm font-medium text-right ${
-                          transaction.type === "expense"
-                            ? "text-red-600"
-                            : "text-green-600"
-                        }`}
-                      >
-                        {transaction.type === "expense" ? "-" : "+"}$
-                        {transaction.amount.toFixed(2)}
-                      </td>
-                    </tr>
+                      transaction={transaction}
+                      budgetId={resolvedParams.id}
+                    />
                   ))}
                 </tbody>
               </table>
@@ -406,5 +402,179 @@ export default function BudgetDetailsPage({ params }: PageProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+function TransactionRow({
+  transaction,
+  budgetId,
+}: {
+  transaction: any;
+  budgetId: string;
+}) {
+  const { mutate: deleteTransaction } = useDeleteTransaction(budgetId, transaction.id);
+  const { mutate: updateTransaction } = useUpdateTransaction(budgetId, transaction.id);
+  const { data: categories = [] } = useCategories();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [editForm, setEditForm] = useState({
+    description: transaction.description,
+    amount: transaction.amount.toString(),
+    type: transaction.type,
+    category_id: transaction.category_id || "",
+    date: transaction.date,
+    notes: transaction.notes || "",
+  });
+
+  const handleDelete = () => {
+    if (confirm(`¿Deseas eliminar la transacción de ${transaction.description}?`)) {
+      setIsDeleting(true);
+      deleteTransaction(undefined, {
+        onSuccess: () => {
+          setIsDeleting(false);
+          setShowMenu(false);
+        },
+        onError: () => setIsDeleting(false),
+      });
+    }
+  };
+
+  const handleUpdate = () => {
+    updateTransaction(
+      {
+        description: editForm.description,
+        amount: parseFloat(editForm.amount),
+        type: editForm.type as "expense" | "income",
+        category: editForm.category_id || null,
+        date: editForm.date,
+        notes: editForm.notes || null,
+      },
+      {
+        onSuccess: () => {
+          setIsEditing(false);
+          setShowMenu(false);
+        },
+      }
+    );
+  };
+
+  if (isEditing) {
+    return (
+      <tr className="border-b border-gray-200 bg-blue-50">
+        <td className="px-6 py-4">
+          <input
+            type="date"
+            value={editForm.date}
+            onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+            className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+          />
+        </td>
+        <td className="px-6 py-4">
+          <input
+            type="text"
+            value={editForm.description}
+            onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+            className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+          />
+        </td>
+        <td className="px-6 py-4">
+          <select
+            value={editForm.category_id}
+            onChange={(e) => setEditForm({ ...editForm, category_id: e.target.value })}
+            className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+          >
+            <option value="">Sin categoría</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+        </td>
+        <td className="px-6 py-4">
+          <input
+            type="number"
+            step="0.01"
+            value={editForm.amount}
+            onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })}
+            className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-right"
+          />
+        </td>
+        <td className="px-6 py-4 text-right space-x-2">
+          <button
+            onClick={handleUpdate}
+            className="text-green-600 hover:text-green-700 text-sm font-medium"
+          >
+            Guardar
+          </button>
+          <button
+            onClick={() => setIsEditing(false)}
+            className="text-gray-600 hover:text-gray-700 text-sm font-medium"
+          >
+            Cancelar
+          </button>
+        </td>
+      </tr>
+    );
+  }
+
+  return (
+    <tr className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+      <td className="px-6 py-4 text-sm text-gray-900">
+        {new Date(transaction.date).toLocaleDateString("es-AR")}
+      </td>
+      <td className="px-6 py-4 text-sm text-gray-900">
+        {transaction.description}
+      </td>
+      <td className="px-6 py-4 text-sm text-gray-600">
+        {transaction.categories?.name || "Sin categoría"}
+      </td>
+      <td
+        className={`px-6 py-4 text-sm font-medium text-right ${
+          transaction.type === "expense" ? "text-red-600" : "text-green-600"
+        }`}
+      >
+        {transaction.type === "expense" ? "-" : "+"}${transaction.amount.toFixed(2)}
+      </td>
+      <td className="px-6 py-4 text-right relative">
+        <div className="relative inline-block">
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded transition-colors"
+            title="Opciones"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path d="M10.5 1.5H9.5V3.5H10.5V1.5ZM10.5 8.5H9.5V10.5H10.5V8.5ZM10.5 15.5H9.5V17.5H10.5V15.5Z" />
+            </svg>
+          </button>
+          
+          {showMenu && (
+            <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+              <button
+                onClick={() => {
+                  setIsEditing(true);
+                  setShowMenu(false);
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-colors border-b border-gray-200"
+              >
+                ✎ Editar
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+              >
+                {isDeleting ? "⏳ Eliminando..." : "🗑️ Eliminar"}
+              </button>
+            </div>
+          )}
+        </div>
+      </td>
+    </tr>
   );
 }
